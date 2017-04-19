@@ -1,0 +1,21 @@
+{
+    "name": "yxf/excellib",
+    "description": "this is php excel lib",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "yxf",
+            "email": "56141083@qq.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+		"php": ">=5.6"
+	},
+	"autoload": {
+        "psr-4": {
+            "Yxf\\Excellib\\": "src/Yxf/Excellib"
+        }
+    }
+}
