@@ -10,13 +10,8 @@ namespace Yxf\Excellib;
 class excelPower
 {
     
-    private function includeLib() {
-        require dirname(__FILE__) . '/PHPExcel.php';
-    }
-    
     //将数据导出为excel
     public static function outputExcel($list,$filename = 'demo', $output = 'php://output') {
-        self::includeLib();
         $objPHPExcel = new \PHPExcel();
         
         //获取当前活动的表
