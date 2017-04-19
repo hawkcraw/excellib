@@ -1,4 +1,5 @@
 <?php
+namespace Yxf\Excellib;
 /**
  *
  * excel操作类
