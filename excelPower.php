@@ -43,8 +43,7 @@ class excelPower
 
     //从excel导入数据
     public static function inputExcel($filename){
-        require_once dirname(__FILE__) . '/PHPExcel/IOFactory.php';
-        $objReader = PHPExcel_IOFactory::createReader('Excel5');//use excel2007 for 2007 format 
+        $objReader = \PHPExcel_IOFactory::createReader('Excel5');//use excel2007 for 2007 format 
         $objPHPExcel = $objReader->load($filename); 
         $sheet = $objPHPExcel->getSheet(0); 
         $highestRow = $sheet->getHighestRow();           //取得总行数 
