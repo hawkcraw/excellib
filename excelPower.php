@@ -43,8 +43,9 @@ class excelPower
 
     //从excel导入数据
     public static function inputExcel($filename){
-        $objReader = \PHPExcel_IOFactory::createReader('Excel5');//use excel2007 for 2007 format 
-        $objPHPExcel = $objReader->load($filename); 
+//        $objReader = \PHPExcel_IOFactory::createReader('Excel5');//use excel2007 for 2007 format
+//        $objPHPExcel = $objReader->load($filename);
+        $objPHPExcel = \PHPExcel_IOFactory::load($filename);//support xls / xlsx
         $sheet = $objPHPExcel->getSheet(0); 
         $highestRow = $sheet->getHighestRow();           //取得总行数 
         $highestColumn = $sheet->getHighestColumn(); //取得总列数
