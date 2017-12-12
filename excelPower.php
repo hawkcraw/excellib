@@ -16,13 +16,24 @@ class excelPower
         
         //获取当前活动的表
         $objActSheet = $objPHPExcel->getActiveSheet();
-        
+        $objActSheet->getDefaultRowDimension()->setRowHeight(-1);
+
         $index = range('A', 'Z');
         $i = 1;
         foreach ($list as $key => $item) {
             $j = 0;
             foreach ($item as $k1 => $v1) {
-                $objActSheet->setCellValueExplicit($index[$j] . $i, $v1, \PHPExcel_Cell_DataType::TYPE_STRING);
+                if(is_array($v1)){
+                    switch (@$v1['type']){
+                        case 'image':
+                            self::setImageCell($index[$j], $i, $v1, $objActSheet);
+                            break;
+                    }
+
+                }else{
+                    $objActSheet->setCellValueExplicit($index[$j] . $i, $v1, \PHPExcel_Cell_DataType::TYPE_STRING);
+                }
+
                 
                 //$objActSheet->setCellValue($index[$j] . $i, $v1);
                 $j++;
@@ -66,6 +77,25 @@ class excelPower
      
         }  
         return $data;
+    }
+
+    //设置图片单元格
+    private static function setImageCell($col, $row, $v, &$objActSheet){
+        // 图片生成
+        if(!file_exists($v['path'])) return ;
+        $objDrawing[$row] = new \PHPExcel_Worksheet_Drawing();
+        $objDrawing[$row]->setPath($v['path']);
+        // 设置宽度高度
+        if(!empty($v['width'])) $objActSheet->getColumnDimension($col)->setWidth($v['width']);
+        $objActSheet->getRowDimension($row)->setRowHeight(70);
+        $objDrawing[$row]->setHeight(80);//照片高度
+        $objDrawing[$row]->setWidth(80); //照片宽度
+        /*设置图片要插入的单元格*/
+        $objDrawing[$row]->setCoordinates($col.$row);
+        // 图片偏移距离
+        $objDrawing[$row]->setOffsetX(1);
+        $objDrawing[$row]->setOffsetY(2);
+        $objDrawing[$row]->setWorksheet($objActSheet);
     }
 }
 
