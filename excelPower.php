@@ -1,137 +1,168 @@
 <?php
+
 namespace Home\Logic;
-/**
+
+//Excel操作类
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
+
+/*
+ * examples
+ * $data = [
+            ['ID','姓名',['value'=>'头像'],'性别',['value'=>'爱好','width'=>30],'very import things','哈哈哈哈哈哈哈哈',],
+            [12,'张三',['image'=>'/images/height_img.png'],'男','唱歌、小牧、玩游戏','不知道什么重要','搜if将诶噢王炯房屋及诶哦',],
+            [31,'栗色',['image'=>'https://www.baidu.com/'],'女','多少分、小我无法玩游戏','不知雾f将重要','搜if将诶噢王炯房屋及诶哦',],
+            [35,'网二',['image'=>'https://ss0.bdstatic.com/70cFuHSh_Q1YnxGkpoWK1HF6hhy/it/u=2688892464,3753125996&fm=111&gp=0.jpg'],'男','唱歌、小牧、玩游戏','不知道什f将重要','搜if将诶噢诶噢王炯及诶哦',],
+            [1,'列大声道',['image'=>'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1514974949837&di=3d3ba7d3f9c03d6c88dd067f21e6253a&imgtype=0&src=http%3A%2F%2Fpic46.nipic.com%2F20140815%2F14008695_152008796000_2.jpg'],'男','唱歌、小牧、玩游戏','不f将什么重要','搜噢王炯房屋if将诶噢王炯房屋及诶哦',],
+            [4,'广东省',['image'=>'images/height_img.png'],'','唱歌、小牧什么玩游戏','不知道f将重要','搜if将诶噢王炯房屋及诶哦',],
+            [134,'多少分',['image'=>'http://static.googleadsserving.cn/pagead/imgad?id=CICAgKDLv-vJngEQoAEY2AQyCH9yHR4LAHzw'],'位','唱歌、小牧、玩游戏','不知道什f将要','搜if将诶噢王炯房屋及诶哦',],
+        ];
+    $path = excelPower::saveLocal($data,'uploads/bac.xls');//保存本地
+    excelPower::download($data,'bac.xls');//直接下载
  *
- * excel操作类
- * 依附类库PHPExcel
- * @author yxf <561641083@qq.com>
+ *
+ *
  *
  */
-
 class excelPower
 {
-    
-    //将数据导出为excel
-    public static function outputExcel($list,$filename = 'demo', $output = 'php://output') {
-        $objPHPExcel = new \PHPExcel();
-        
-        //获取当前活动的表
-        $objActSheet = $objPHPExcel->getActiveSheet();
-        $objActSheet->getDefaultRowDimension()->setRowHeight(-1);
 
-        $index = range('A', 'Z');
-        $i = 1;
-        foreach ($list as $key => $item) {
-            $j = 0;
-            foreach ($item as $k1 => $v1) {
-                if(is_array($v1)){
-                    switch (@$v1['type']){
-                        case 'image':
-                            self::setImageCell($index[$j], $i, $v1, $objActSheet);
-                            break;
-                    }
+    public static $index = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+        'AA','AB','AC','AD','AE','AF','AG','AH','AI','AJ','AK','AL','AM','AN','AO','AP','AQ','AR','AS','AT','AU','AV','AW','AX','AY','AZ',
+        'BA','BB','BC','BD','BE','BF','BG','BH','BI','BJ','BK','BL','BM','BN','BO','BP','BQ','BR','BS','BT','BU','BV','BW','BX','BY','BZ',
+        'CA','CB','CC','CD','CE','CF','CG','CH','CI','CJ','CK','CL','CM','CN','CO','CP','CQ','CR','CS','CT','CU','CV','CW','CX','CY','CZ',
+    ];
 
-                }else{
-                    //$objActSheet->setCellValueExplicit($index[$j] . $i, $v1, \PHPExcel_Cell_DataType::TYPE_STRING);
-                    self::setCellValue($index[$j] . $i, $v1, $objPHPExcel);
-                }
+    public static $_useTpl = false;
+    //下载
+    public static function download($data, $filename, $rowHeight=80, $type='Xlsx'){
 
-                
-                //$objActSheet->setCellValue($index[$j] . $i, $v1);
-                $j++;
+        $spreadsheet = self::createExcel($data,$rowHeight);
+
+// Redirect output to a client’s web browser (Xls)
+        header('Content-Type: application/vnd.ms-excel');
+        header('Content-Disposition: attachment;filename="'.$filename.'"');
+        header('Cache-Control: max-age=0');
+// If you're serving to IE 9, then the following may be needed
+        header('Cache-Control: max-age=1');
+
+// If you're serving to IE over SSL, then the following may be needed
+        header('Expires: Mon, 26 Jul 1997 05:00:00 GMT'); // Date in the past
+        header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT'); // always modified
+        header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
+        header('Pragma: public'); // HTTP/1.0
+
+        $writer = IOFactory::createWriter($spreadsheet, $type);
+        $writer->save('php://output');
+        exit;
+    }
+
+    public static function saveLocal($data,$filename,$rowHeight=80,$type='Xlsx',$useTpl=true){
+        $spreadsheet = self::createExcel($data,$rowHeight,$useTpl);
+        $writer = IOFactory::createWriter($spreadsheet, $type);
+        if(!is_dir(dirname($filename))) @mkdir(dirname($filename),0777,true);
+        $writer->save($filename);
+        if(file_exists($filename)){
+            return $filename;
+        }
+        return false;
+    }
+
+    protected static function createExcel($data, $rowHeight=80, $useTpl=true){
+
+        if($useTpl){
+            self::$_useTpl = $useTpl;
+            $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
+            $spreadsheet = $reader->load("template/data.xlsm");
+        }else{
+            $spreadsheet = new Spreadsheet();
+        }
+
+// Set document properties
+//        $spreadsheet->getProperties()->setCreator('Maarten Balliauw')
+//            ->setLastModifiedBy('Maarten Balliauw')
+//            ->setTitle('Office 2007 XLSX Test Document')
+//            ->setSubject('Office 2007 XLSX Test Document')
+//            ->setDescription('Test document for Office 2007 XLSX, generated using PHP classes.')
+//            ->setKeywords('office 2007 openxml php')
+//            ->setCategory('Test result file');
+
+// Add some data
+        $currentSheet = $spreadsheet->setActiveSheetIndex(0);
+        foreach ($data as $row => $row_data){
+            foreach($row_data as $col => $val){
+                self::setCellValue(self::$index[$col].($row+1),$val,$currentSheet,$col,$row);
             }
-            $i++;
+            $currentSheet->getRowDimension($row+1)->setRowHeight($rowHeight);
         }
-        
-        if($output === 'php://output'){//保存文件
-            header ( 'Content-Type: application/vnd.ms-excel' );
-            header ( 'Content-Disposition: attachment;filename="' . $filename . '.xls"' ); //"'.$filename.'.xls"
-            header ( 'Cache-Control: max-age=0' );
-        }
-        
-        $objWriter = \PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
-         //在内存中准备一个excel2003文件
-        $objWriter->save($output);
+
+// Rename worksheet
+        $spreadsheet->getActiveSheet()->setTitle('Sheet1');
+        // Set active sheet index to the first sheet, so Excel opens this as the first sheet
+//        $spreadsheet->setActiveSheetIndex(0);
+        return $spreadsheet;
     }
 
-    //从excel导入数据
-    public static function inputExcel($filename){
-//        $objReader = \PHPExcel_IOFactory::createReader('Excel5');//use excel2007 for 2007 format
-//        $objPHPExcel = $objReader->load($filename);
-        $objPHPExcel = \PHPExcel_IOFactory::load($filename);//support xls / xlsx
-        $sheet = $objPHPExcel->getSheet(0); 
-        $highestRow = $sheet->getHighestRow();           //取得总行数 
-        $highestColumn = $sheet->getHighestColumn(); //取得总列数
-
-        //循环读取excel文件,读取一条,插入一条
-        $data = null;
-        for($j=1;$j<=$highestRow;$j++)                        //从第一行开始读取数据
-        { 
-            for($k='A',$i=0;$k<=$highestColumn;$k++,$i++)            //从A列读取数据
-            { 
-                //
-                // 这种方法简单，但有不妥，以''合并为数组，再分割为字段值插入到数据库
-                // 实测在excel中，如果某单元格的值包含了导入的数据会为空        
-                //
-                $data[$j][$i]=$objPHPExcel->getActiveSheet()->getCell("$k$j")->getValue().'';//读取单元格
-            } 
-            
-     
-        }  
-        return $data;
-    }
-
-    //设置图片单元格
-    private static function setImageCell($col, $row, $v, &$objActSheet){
-        // 图片生成
-        if(!file_exists($v['path'])) return ;
-        $objDrawing[$row] = new \PHPExcel_Worksheet_Drawing();
-        $objDrawing[$row]->setPath($v['path']);
-        // 设置宽度高度
-        if(!empty($v['width'])) $objActSheet->getColumnDimension($col)->setWidth($v['width']);
-        $objActSheet->getRowDimension($row)->setRowHeight(70);
-        $objDrawing[$row]->setHeight(80);//照片高度
-        $objDrawing[$row]->setWidth(80); //照片宽度
-        /*设置图片要插入的单元格*/
-        $objDrawing[$row]->setCoordinates($col.$row);
-        // 图片偏移距离
-        $objDrawing[$row]->setOffsetX(1);
-        $objDrawing[$row]->setOffsetY(2);
-        $objDrawing[$row]->setWorksheet($objActSheet);
-    }
-
-    private function setCellValue($cell,$val, &$objPHPExcel){
-
-        $objPHPExcel->getActiveSheet(0)->setCellValue($cell, trim($val));
-
-        if(is_numeric(trim($val)) && strlen(trim($val)) <= 15){//excel只能显示15数字
-            $number = trim($val);
-            if(strpos($number,'.')>0){
-                $objPHPExcel->getActiveSheet(0)->getStyle($cell)
-                    ->getNumberFormat()->setFormatCode(\PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1);
-            }else{
-                $objPHPExcel->getActiveSheet(0)->getStyle($cell)
-                    ->getNumberFormat()->setFormatCode(\PHPExcel_Style_NumberFormat::FORMAT_NUMBER);
+    protected static function setCellValue($cell,$val,&$currentSheet,$col='',$row=''){
+        //下面一行代码有问题，还没仔细看
+        //if($col==1) $currentSheet->getColumnDimension(self::$index[$row])->setWidth(20);
+        if(is_array($val)){
+            if(!empty($val['image'])){
+                self::setImageCell($cell,$val['image'],$currentSheet);
             }
-
+            if(!empty($val['value'])){
+                $currentSheet->setCellValue($cell, $val['value']);
+            }
+            if(!empty($val['width'])){
+                $currentSheet->getColumnDimension(self::$index[$col])->setWidth($val['width']);
+            }
+            if(!empty($val['row'])){
+                //$currentSheet->mergeCells('A18:E22');
+                $currentSheet->mergeCells($cell.':'.self::$index[$col].($row+$val['row']+1));
+            }
+        }else{
+            $currentSheet->setCellValue($cell, $val);
         }
+        $currentSheet->getStyle($cell)->getAlignment()->setWrapText(true);
+    }
+
+    private static function setImageCell($cell,$image_url,&$currentSheet){
+        if(self::$_useTpl){
+            $currentSheet->setCellValue($cell,
+                strpos($image_url,'http:')===false?
+                    (\Yii::$app->request->hostInfo.'/' .$image_url)
+                    :$image_url
+            );
+            return;
+        }
+        $drawing = new Drawing();
+        $drawing->setName('Image');
+        $drawing->setDescription('');
+        $path = self::getImagePath($image_url);
+        if(!file_exists($path)) return false;
+        $drawing->setPath($path);
+
+        $drawing->setCoordinates($cell);
+        $drawing->setOffsetX(6);                       //setOffsetX works properly
+        $drawing->setOffsetY(6);
+        $drawing->setWidthAndHeight(100,100);
+        $drawing->setWorksheet($currentSheet);
+//        $currentSheet->getColumnDimension(substr($cell,0,1))->setWidth(1000);
+//        $currentSheet->getRowDimension(substr($cell,1))->setRowHeight(60);
+    }
+    protected static function getImagePath($url){
+        $filename = md5($url).'.'.pathinfo($url,PATHINFO_EXTENSION);
+        $path = getcwd().'/downloads/excel_image/';
+        if(file_exists($path.$filename)) return $path.$filename;
+        if(strpos($url,'http')===0){
+            if(!empty(getimagesize($url))){
+                if(!is_dir($path)) @mkdir($path,0777,true);
+                @copy($url,$path.$filename);
+                return $path.$filename;
+            }
+            return '';
+        }
+        return ltrim($url,'/');
     }
 }
-
-//=================demo==================//
-//输出excel
-// $data = [
-//     ['黎明',28,'唱歌'],
-//     ['张三',38,'画画'],
-//     ['李四',128,'吃饭'],
-//     ['王武',8,'睡觉'],
-// ];
-// array_unshift($data, ['姓名','年龄','任务']);
-//excelPower::outputExcel($data,'人员');//输出到浏览器下载
-//excelPower::outputExcel($data,'人员','./'.date('YmdHis').'.xls');//保存到本地 注：需要有操作目录权限
-
-
-//导入excel
-// $data = excelPower::inputExcel('20151224180030.xls');
-// var_dump($data);
-?>
