@@ -1,6 +1,6 @@
 <?php
 
-namespace Home\Logic;
+namespace yxf;
 
 //Excel操作类
 use PhpOffice\PhpSpreadsheet\IOFactory;
