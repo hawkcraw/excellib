@@ -1,5 +1,5 @@
 <?php
-namespace Yxf\Excellib;
+namespace Home\Logic;
 /**
  *
  * excel操作类
@@ -32,7 +32,8 @@ class excelPower
                     }
 
                 }else{
-                    $objActSheet->setCellValueExplicit($index[$j] . $i, $v1, \PHPExcel_Cell_DataType::TYPE_STRING);
+                    //$objActSheet->setCellValueExplicit($index[$j] . $i, $v1, \PHPExcel_Cell_DataType::TYPE_STRING);
+                    self::setCellValue($index[$j] . $i, $v1, $objPHPExcel);
                 }
 
                 
@@ -97,6 +98,23 @@ class excelPower
         $objDrawing[$row]->setOffsetX(1);
         $objDrawing[$row]->setOffsetY(2);
         $objDrawing[$row]->setWorksheet($objActSheet);
+    }
+
+    private function setCellValue($cell,$val, &$objPHPExcel){
+
+        $objPHPExcel->getActiveSheet(0)->setCellValue($cell, trim($val));
+
+        if(is_numeric(trim($val)) && strlen(trim($val)) <= 15){//excel只能显示15数字
+            $number = trim($val);
+            if(strpos($number,'.')>0){
+                $objPHPExcel->getActiveSheet(0)->getStyle($cell)
+                    ->getNumberFormat()->setFormatCode(\PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1);
+            }else{
+                $objPHPExcel->getActiveSheet(0)->getStyle($cell)
+                    ->getNumberFormat()->setFormatCode(\PHPExcel_Style_NumberFormat::FORMAT_NUMBER);
+            }
+
+        }
     }
 }
 
