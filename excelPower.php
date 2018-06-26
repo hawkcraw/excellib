@@ -1,6 +1,6 @@
 <?php
 
-namespace yxf;
+namespace Yxf\Excellib;
 
 //Excel操作类
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -74,7 +74,7 @@ class excelPower
         if($useTpl){
             self::$_useTpl = $useTpl;
             $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
-            $spreadsheet = $reader->load("template/data.xlsm");
+            $spreadsheet = $reader->load(__DIR__."/template/data.xlsm");
         }else{
             $spreadsheet = new Spreadsheet();
         }
@@ -129,11 +129,7 @@ class excelPower
 
     private static function setImageCell($cell,$image_url,&$currentSheet){
         if(self::$_useTpl){
-            $currentSheet->setCellValue($cell,
-                strpos($image_url,'http:')===false?
-                    (\Yii::$app->request->hostInfo.'/' .$image_url)
-                    :$image_url
-            );
+            $currentSheet->setCellValue($cell,$image_url);
             return;
         }
         $drawing = new Drawing();
