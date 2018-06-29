@@ -36,13 +36,13 @@ class excelPower
 
     public static $_useTpl = false;
     //下载
-    public static function download($data, $filename, $rowHeight=80, $type='Xlsx'){
+    public static function download($data, $filename, $rowHeight=80, $type='Xlsx', $useTpl=false){
 
-        $spreadsheet = self::createExcel($data,$rowHeight);
+        $spreadsheet = self::createExcel($data,$rowHeight, $useTpl);
 
 // Redirect output to a client’s web browser (Xls)
         header('Content-Type: application/vnd.ms-excel');
-        header('Content-Disposition: attachment;filename="'.$filename.'"');
+        header('Content-Disposition: attachment;filename="'.$filename.'.'.strtolower($type).'"');
         header('Cache-Control: max-age=0');
 // If you're serving to IE 9, then the following may be needed
         header('Cache-Control: max-age=1');
@@ -69,7 +69,7 @@ class excelPower
         return false;
     }
 
-    protected static function createExcel($data, $rowHeight=80, $useTpl=true){
+    protected static function createExcel($data, $rowHeight=80, $useTpl=false){
 
         if($useTpl){
             self::$_useTpl = $useTpl;
