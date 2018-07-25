@@ -106,7 +106,9 @@ class excelPower
 
     protected static function setCellValue($cell,$val,&$currentSheet,$col='',$row=''){
         //下面一行代码有问题，还没仔细看
-        //if($col==1) $currentSheet->getColumnDimension(self::$index[$row])->setWidth(20);
+        if($row===0) {
+            $currentSheet->getColumnDimension(self::$index[$col])->setWidth(20);
+        }
         if(is_array($val)){
             if(!empty($val['image'])){
                 self::setImageCell($cell,$val['image'],$currentSheet);
@@ -120,6 +122,9 @@ class excelPower
             if(!empty($val['row'])){
                 //$currentSheet->mergeCells('A18:E22');
                 $currentSheet->mergeCells($cell.':'.self::$index[$col].($row+$val['row']+1));
+            }
+            if(!empty($val['col'])){
+                $currentSheet->mergeCells($cell.':'.self::$index[$col+$val['col']].($row+1));
             }
         }else{
             $currentSheet->setCellValue($cell, $val);
