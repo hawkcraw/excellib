@@ -69,6 +69,25 @@ class excelPower
         return false;
     }
 
+    public static function saveCsv($data,$filename,$path){
+        if (count($data) == 0 || !$path) {
+            return null;
+        }
+        $real_path = getcwd().$path;
+        if(!is_dir($real_path)) @mkdir($real_path,0777,true);
+
+
+        $file = $real_path.DIRECTORY_SEPARATOR.$filename.'.csv';
+        $df = fopen($file, 'w');
+        $header = array_shift($data);
+        fputcsv($df, array_values($header));
+        foreach ($data as $row) {
+            fputcsv($df, $row);
+        }
+        fclose($df);
+        return $file;
+    }
+
     protected static function createExcel($data, $rowHeight=80, $useTpl=false){
 
         if($useTpl){
