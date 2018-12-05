@@ -88,6 +88,25 @@ class excelPower
         return $file;
     }
 
+    public static function saveBigCsv($func,$filename,$path=null,$type='download'){
+
+        $path = $path ? $path : sys_get_temp_dir().DIRECTORY_SEPARATOR;
+        $file = $path.$filename.'_'.date('YmdHis').'.csv';
+        if(!is_dir($path)) @mkdir($path,0777,true);
+        $fp = fopen($file, 'w');
+
+        $func($fp);
+
+        fclose($fp);
+
+        if($type!='download') return $file;
+        header('Content-Type: application/octet-stream');
+        header("Content-Transfer-Encoding: Binary");
+        header("Content-disposition: attachment; filename=\"" . basename($file) . "\"");
+        readfile($file);
+        die;
+    }
+
     protected static function createExcel($data, $rowHeight=80, $useTpl=false){
 
         if($useTpl){
