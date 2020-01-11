@@ -18,8 +18,14 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
             [4,'广东省',['image'=>'images/height_img.png'],'','唱歌、小牧什么玩游戏','不知道f将重要','搜if将诶噢王炯房屋及诶哦',],
             [134,'多少分',['image'=>'http://static.googleadsserving.cn/pagead/imgad?id=CICAgKDLv-vJngEQoAEY2AQyCH9yHR4LAHzw'],'位','唱歌、小牧、玩游戏','不知道什f将要','搜if将诶噢王炯房屋及诶哦',],
         ];
+   $data1 = [
+        ['id'=>1,'name'=>'张三','gender'=>'男'],
+        ['id'=>2,'name'=>'李文','gender'=>'女'],
+    ];
     $path = excelPower::saveLocal($data,'uploads/bac.xls');//保存本地
     excelPower::download($data,'bac.xls');//直接下载
+    excelPower::saveCsv($data,'bac.xls');//直接下载
+    excelPower::saveCsv(excelPower::arrMap2CsvArr($data1),'bac.xls');//直接下载
  *
  *
  *
@@ -69,15 +75,15 @@ class excelPower
         return false;
     }
 
-    public static function saveCsv($data,$filename,$path){
-        if (count($data) == 0 || !$path) {
+    public static function saveCsv($data,$filename,$path=null,$type='download'){
+        if (count($data) == 0) {
             return null;
         }
-        $real_path = getcwd().$path;
-        if(!is_dir($real_path)) @mkdir($real_path,0777,true);
+        $path = $path ? $path : sys_get_temp_dir().DIRECTORY_SEPARATOR;
 
+        if(!is_dir($path)) @mkdir($path,0777,true);
 
-        $file = $real_path.DIRECTORY_SEPARATOR.$filename.'.csv';
+        $file = $path.DIRECTORY_SEPARATOR.$filename.'.csv';
         $df = fopen($file, 'w');
         $header = array_shift($data);
         fputcsv($df, array_values($header));
@@ -85,6 +91,14 @@ class excelPower
             fputcsv($df, $row);
         }
         fclose($df);
+        if($type=='download'){
+            header('Content-Type: application/octet-stream');
+            header("Content-Transfer-Encoding: Binary");
+            header("Content-disposition: attachment; filename=\"" . basename($file) . "\"");
+            readfile($file);
+            die;
+        }
+
         return $file;
     }
 
@@ -105,6 +119,34 @@ class excelPower
         header("Content-disposition: attachment; filename=\"" . basename($file) . "\"");
         readfile($file);
         die;
+    }
+
+    public static function getCsvData($file_path,$allow_fields=[]){
+
+        if(!is_file($file_path)) return ['error'=>1,'msg'=>'文件不存在'];
+        $file = fopen($file_path,'r');
+        $list = [];
+
+        while ($data = fgetcsv($file)) {
+            $list[] = $data;
+        }
+        $header = array_map(array(__CLASS__, 'removeBomUtf8'),array_shift($list));
+        if(!empty($allow_fields) && !empty(array_diff($allow_fields,$header))){
+            return ['error'=>1, 'msg'=> "导入格式有误，请查看【demo】"];
+        }
+        $list = array_reduce($list,function($result, $item)use($header){
+            array_push($result,array_combine($header,$item));
+            return $result;
+        },[]);
+        return $list;
+    }
+
+    public static function arrMap2CsvArr($data){
+        if(empty($data)) return [];
+        $header = array_keys(reset($data));
+        $data = array_map('array_values',$data);
+        array_unshift($data,$header);
+        return $data;
     }
 
     protected static function createExcel($data, $rowHeight=80, $useTpl=false){
@@ -203,5 +245,13 @@ class excelPower
             return '';
         }
         return ltrim($url,'/');
+    }
+
+    protected static function removeBomUtf8($s){
+        if(substr($s,0,3)==chr(hexdec('EF')).chr(hexdec('BB')).chr(hexdec('BF'))){
+            return substr($s,3);
+        }else{
+            return $s;
+        }
     }
 }
